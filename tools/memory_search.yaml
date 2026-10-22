@@ -1,0 +1,59 @@
+identity:
+  name: memory_search
+  author: neyara11
+  label:
+    en_US: Memory Search
+    ru_RU: Поиск в памяти
+description:
+  human:
+    en_US: Search the user's long-term memory file for facts relevant to a query.
+    ru_RU: Ищет в файле памяти пользователя факты, релевантные запросу.
+  llm: >-
+    Search the user's long-term, cross-session memory for relevant facts,
+    preferences, goals, and dialog summaries. Call it at the beginning of a
+    conversation or whenever prior knowledge about the user could help.
+    Results include chunk ids which can be passed to memory_forget.
+parameters:
+  - name: query
+    type: string
+    required: true
+    label:
+      en_US: Query
+      ru_RU: Запрос
+    human_description:
+      en_US: What to look for in memory.
+      ru_RU: Что искать в памяти.
+    llm_description: >-
+      A short natural-language query describing what to recall (e.g. "user
+      preferences about meeting times").
+    form: llm
+  - name: top_k
+    type: number
+    required: false
+    default: 5
+    min: 1
+    max: 10
+    label:
+      en_US: Top K
+      ru_RU: Количество результатов
+    human_description:
+      en_US: Maximum number of memories to return (1-10).
+      ru_RU: Максимум воспоминаний в ответе (1-10).
+    llm_description: Maximum number of memories to return, default 5.
+    form: form
+  - name: user_key
+    type: string
+    required: false
+    label:
+      en_US: User key
+      ru_RU: Идентификатор пользователя
+    human_description:
+      en_US: User identifier such as user id or email. Falls back to the Dify end-user id when omitted.
+      ru_RU: Идентификатор пользователя (id или email). Если пусто — берётся end-user id из Dify.
+    llm_description: >-
+      User identifier (user id or email) when the conversation makes it known.
+      Leave empty to use the platform end-user id automatically.
+    form: llm
+extra:
+  python:
+    source: tools/memory_search.py

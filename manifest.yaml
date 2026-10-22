@@ -1,0 +1,33 @@
+version: 0.0.7
+type: plugin
+author: "neyara11"
+name: "dify-kb-memory"
+label:
+  en_US: "Dify KB Memory"
+  ru_RU: "Память на базе знаний"
+description:
+  en_US: "Cross-session memory for Dify Agent and Chatflow apps, stored in a Dify knowledge base: one memory document per user, one fact per chunk."
+  ru_RU: "Межсессионная память для агентов Dify на базе знаний: файл памяти на пользователя, факт — отдельный чанк."
+created_at: "2026-10-22T19:30:00.000000000Z"
+icon: icon.svg
+resource:
+  memory: 268435456
+  permission:
+    tool:
+      enabled: true
+    storage:
+      enabled: true
+      size: 1048576
+plugins:
+  tools:
+    - "provider/dify_kb_memory.yaml"
+meta:
+  version: 0.0.1
+  arch:
+    - "amd64"
+    - "arm64"
+  runner:
+    language: "python"
+    version: "3.12"
+    entrypoint: "main"
+privacy: ./privacy.md

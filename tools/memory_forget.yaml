@@ -1,0 +1,46 @@
+identity:
+  name: memory_forget
+  author: neyara11
+  label:
+    en_US: Memory Forget
+    ru_RU: Забыть из памяти
+description:
+  human:
+    en_US: Delete outdated or explicitly unwanted memories from the user's memory file.
+    ru_RU: Удаляет устаревшие или нежелательные воспоминания из файла памяти пользователя.
+  llm: >-
+    Remove memories from the user's long-term memory. Use when a stored fact is
+    outdated, contradicted by new information, explicitly retracted by the user,
+    or should never have been stored. Pass either a chunk id returned by
+    memory_search/memory_recent, or the exact fact text to delete by substring
+    match. When replacing a fact, delete the old one and save the new one.
+parameters:
+  - name: target
+    type: string
+    required: true
+    label:
+      en_US: Target
+      ru_RU: Цель удаления
+    human_description:
+      en_US: Chunk id (UUID) or the fact text to delete.
+      ru_RU: ID чанка (UUID) или текст факта для удаления.
+    llm_description: >-
+      Either a chunk id (UUID) from memory_search/memory_recent, or the exact
+      text of the fact to remove (substring match against stored facts).
+    form: llm
+  - name: user_key
+    type: string
+    required: false
+    label:
+      en_US: User key
+      ru_RU: Идентификатор пользователя
+    human_description:
+      en_US: User identifier such as user id or email. Falls back to the Dify end-user id when omitted.
+      ru_RU: Идентификатор пользователя (id или email). Если пусто — берётся end-user id из Dify.
+    llm_description: >-
+      User identifier (user id or email) when the conversation makes it known.
+      Leave empty to use the platform end-user id automatically.
+    form: llm
+extra:
+  python:
+    source: tools/memory_forget.py

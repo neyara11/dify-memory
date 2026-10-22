@@ -1,0 +1,76 @@
+identity:
+  name: memory_save
+  author: neyara11
+  label:
+    en_US: Memory Save
+    ru_RU: Сохранить в память
+description:
+  human:
+    en_US: Save a durable fact, preference, goal, or dialog summary into the user's long-term memory file in the knowledge base.
+    ru_RU: Сохраняет долговременный факт, предпочтение, цель или резюме диалога в файл памяти пользователя в базе знаний.
+  llm: >-
+    Save durable information about the user into long-term, cross-session memory.
+    Use it only for information worth remembering in future conversations:
+    stable facts (name, role, timezone), preferences, goals, constraints,
+    decisions, and short summaries of important dialogs. Do NOT save transient
+    details of the current task, secrets, or anything the user asked to forget.
+    Prefer one fact per call, phrased as a self-contained sentence.
+parameters:
+  - name: content
+    type: string
+    required: true
+    label:
+      en_US: Content
+      ru_RU: Содержание
+    human_description:
+      en_US: The self-contained fact or summary to remember.
+      ru_RU: Самодостаточный факт или резюме для запоминания.
+    llm_description: >-
+      The fact to store, as one self-contained sentence understandable without
+      the surrounding dialog (e.g. "User's name is Anna, she is a product
+      manager in Berlin").
+    form: llm
+  - name: kind
+    type: string
+    required: false
+    default: fact
+    label:
+      en_US: Kind
+      ru_RU: Тип
+    human_description:
+      en_US: "Memory kind: fact, preference, goal, dialog, or summary."
+      ru_RU: "Тип памяти: fact, preference, goal, dialog или summary."
+    llm_description: >-
+      One of: fact (stable user fact), preference (likes, dislikes, style),
+      goal (what the user wants to achieve), dialog (notable dialog event),
+      summary (condensed summary of a conversation).
+    form: llm
+  - name: keywords
+    type: string
+    required: false
+    label:
+      en_US: Keywords
+      ru_RU: Ключевые слова
+    human_description:
+      en_US: Optional comma-separated keywords for retrieval.
+      ru_RU: Необязательные ключевые слова для поиска через запятую.
+    llm_description: >-
+      Optional comma-separated keywords that improve retrieval (e.g.
+      "berlin, timezone, travel").
+    form: llm
+  - name: user_key
+    type: string
+    required: false
+    label:
+      en_US: User key
+      ru_RU: Идентификатор пользователя
+    human_description:
+      en_US: User identifier such as user id or email. Falls back to the Dify end-user id when omitted.
+      ru_RU: Идентификатор пользователя (id или email). Если пусто — берётся end-user id из Dify.
+    llm_description: >-
+      User identifier (user id or email) when the conversation makes it known.
+      Leave empty to use the platform end-user id automatically.
+    form: llm
+extra:
+  python:
+    source: tools/memory_save.py

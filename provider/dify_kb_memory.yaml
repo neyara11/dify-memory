@@ -1,0 +1,73 @@
+identity:
+  author: neyara11
+  name: dify_kb_memory
+  label:
+    en_US: Dify KB Memory
+    ru_RU: Память на базе знаний Dify
+  description:
+    en_US: Cross-session user memory stored in a Dify knowledge base. One memory document per user, one fact per chunk.
+    ru_RU: Межсессионная память пользователя в базе знаний Dify. Документ памяти на пользователя, факт — отдельный чанк.
+  icon: icon.svg
+  tags:
+    - other
+credentials_for_provider:
+  api_base:
+    type: text-input
+    required: true
+    default: http://api:5001/v1
+    label:
+      en_US: Dify service API base URL
+      ru_RU: Базовый URL сервисного API Dify
+    placeholder:
+      en_US: http://api:5001/v1 inside docker-compose, or https://your-dify-host/v1
+      ru_RU: http://api:5001/v1 внутри docker-compose или https://ваш-хост-dify/v1
+  dataset_api_key:
+    type: secret-input
+    required: true
+    label:
+      en_US: Knowledge base API key
+      ru_RU: API-ключ базы знаний
+    help:
+      en_US: Create it in the knowledge base -> API Access. The key must cover the memory knowledge base.
+      ru_RU: Создайте в базе знаний -> API Access. Ключ должен покрывать базу знаний памяти.
+  dataset_id:
+    type: text-input
+    required: true
+    label:
+      en_US: Memory knowledge base ID
+      ru_RU: ID базы знаний памяти
+    help:
+      en_US: The knowledge base where user memory documents are created. Copy the ID from the Dify URL or via the Datasets API.
+      ru_RU: База знаний, где создаются документы памяти пользователей. ID виден в URL Dify.
+  search_method:
+    type: select
+    required: false
+    default: hybrid_search
+    label:
+      en_US: Search method
+      ru_RU: Метод поиска
+    options:
+      - value: hybrid_search
+        label:
+          en_US: Hybrid (vector + keyword)
+          ru_RU: Гибридный (вектор + ключевые слова)
+      - value: semantic_search
+        label:
+          en_US: Semantic (vector)
+          ru_RU: Семантический (векторный)
+      - value: full_text_search
+        label:
+          en_US: Full text
+          ru_RU: Полнотекстовый
+      - value: keyword_search
+        label:
+          en_US: Keyword
+          ru_RU: По ключевым словам
+tools:
+  - tools/memory_save.yaml
+  - tools/memory_search.yaml
+  - tools/memory_forget.yaml
+  - tools/memory_recent.yaml
+extra:
+  python:
+    source: provider/dify_kb_memory.py
