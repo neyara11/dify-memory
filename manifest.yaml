@@ -1,6 +1,8 @@
 version: 0.0.7
 type: plugin
 author: "neyara11"
+repo: "https://github.com/neyara11/dify-memory"
+contact: "neyara@mail.ru"
 name: "dify-kb-memory"
 label:
   en_US: "Dify KB Memory"
@@ -23,6 +25,7 @@ plugins:
     - "provider/dify_kb_memory.yaml"
 meta:
   version: 0.0.1
+  minimum_dify_version: "1.0.0"
   arch:
     - "amd64"
     - "arm64"
