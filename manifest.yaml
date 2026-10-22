@@ -30,4 +30,4 @@ meta:
     language: "python"
     version: "3.12"
     entrypoint: "main"
-privacy: ./privacy.md
+privacy: ./PRIVACY.md

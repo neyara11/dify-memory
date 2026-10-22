@@ -1,0 +1,36 @@
+# Git and packaging state
+.git/
+.gitignore
+.difyignore
+.github/
+*.difypkg
+
+# Python caches and build artifacts
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+
+# Virtual environments and local settings
+.env
+.venv/
+venv/
+env/
+ENV/
+
+# Editors and OS files
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Not needed at runtime
+LICENSE

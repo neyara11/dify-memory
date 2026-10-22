@@ -1,89 +1,101 @@
-# dify-kb-memory — межсессионная память для агентов Dify
+# Dify KB Memory
 
-Tool-плагин для self-hosted Dify. Память пользователя хранится в обычной
-базе знаний Dify: **документ = «файл памяти» пользователя, чанк = один факт**.
-Внешние сервисы не нужны, эмбеддинги и поиск выполняет сам Dify.
+Cross-session memory tool plugin for self-hosted Dify. User memory is stored in
+a regular Dify knowledge base: **one document per user ("memory file"), one
+chunk per fact**. No external services are required: embeddings, indexing, and
+retrieval are handled by Dify itself.
 
-## Как это устроено
+Source repository: https://github.com/neyara11/dify-memory
 
-- У каждого пользователя свой документ в базе знаний: `memory::<user_key>`.
-- Каждое воспоминание — отдельный чанк (факт, предпочтение, цель, резюме диалога)
-  с ключевыми словами.
-- Маппинг `user_key -> document id` хранится в persistent KV-storage плагина;
-  при потере — восстанавливается по имени документа. Своя БД не нужна.
-- Метаданное `user_id` ставится на документ, и поиск идёт с серверным
-  `metadata_filtering_conditions`, поэтому **все top-K слотов достаются
-  конкретному пользователю**, а не смешиваются со всеми. Ограничение Dify
-  «максимум top-10 чанков на запрос» — это лимит запроса, а не памяти; сверху
-  `memory_search` дозаполняет выдачу ключевым совпадением по списку чанков
-  (без капа), `memory_recent` вообще листает пагинацию.
-- Идентификация: параметр `user_key` (id или email) → fallback на end-user id
-  из рантайма Dify (`self.runtime.user_id`) → `conversation_id`.
+## How it works
 
-## Инструменты (для Agent-блока)
+- Each user gets a document named `memory::<user_key>` in the configured
+  knowledge base.
+- Every memory is a separate chunk (fact, preference, goal, dialog summary)
+  with keywords.
+- The `user_key -> document id` mapping is kept in the plugin's persistent
+  key-value storage; it is restored by document name if lost and reset
+  automatically when a document no longer exists. No database of your own is
+  needed.
+- A `user_id` metadata field is set on each document, and retrieval uses
+  server-side `metadata_filtering_conditions`, so all top-K slots belong to the
+  requested user instead of being mixed across users. Dify caps retrieval at
+  ~10 chunks per request; `memory_search` tops up results with a keyword match
+  over the chunk list, and `memory_recent` paginates without that cap.
+- Identity resolution: the `user_key` tool parameter (user id or email) falls
+  back to the Dify runtime end-user id (`self.runtime.user_id`) and then to
+  `conversation_id`.
 
-| Тул | Что делает |
+## Tools (for the Agent node)
+
+| Tool | Purpose |
 |---|---|
-| `memory_save` | сохраняет факт (`kind`: fact/preference/goal/dialog/summary) |
-| `memory_search` | семантический/гибридный поиск по памяти пользователя |
-| `memory_forget` | удаляет по id чанка или по тексту факта (substring) |
-| `memory_recent` | список последних воспоминаний с id (без top-K лимита) |
+| `memory_save` | Stores a fact (`kind`: fact/preference/goal/dialog/summary) |
+| `memory_search` | Semantic/hybrid search over the user's memories |
+| `memory_forget` | Deletes by chunk id or by fact text (substring match) |
+| `memory_recent` | Lists the most recent memories with chunk ids (no top-K cap) |
 
-Все параметры кроме `top_k`/`limit` — `form: llm`, т.е. агент сам решает, что
-сохранить/удалить, и сам заполняет содержимое.
+All parameters except `top_k`/`limit` use `form: llm`, so the agent decides what
+to save or delete and fills in the content itself.
 
-## Установка
+## Installation
 
-1. **База знаний.** Создайте в Dify базу знаний для памяти:
-   - в настройках базы выберите модель эмбеддингов (нужна для `high_quality`);
-   - включите API Access и создайте API-ключ базы знаний;
-   - запомните ID базы (виден в URL).
-2. **Плагин.** Соберите и установите:
+1. **Knowledge base.** Create a knowledge base in Dify to hold memories:
+   - configure an embedding model in the knowledge base settings (`high_quality`
+     indexing is used);
+   - enable API Access and create a knowledge base API key;
+   - note the knowledge base ID (visible in the Dify URL).
+2. **Plugin.** Build and install:
    ```bash
-   dify plugin package ./integrations/dify-memory   # даст dify-kb-memory.difypkg
+   dify plugin package ./dify-memory   # produces dify-kb-memory.difypkg
    ```
-   Установите `.difypkg` через Plugins -> Install plugin (Local) вашего инстанса
-   или через `dify plugin install`.
-3. **Конфигурация тулов** (в карточке инструмента):
-   - `Dify service API base URL` — изнутри docker-compose: `http://api:5001/v1`,
-     иначе `https://ваш-хост-dify/v1`;
-   - `Knowledge base API key` — ключ из шага 1;
-   - `Memory knowledge base ID` — ID базы;
-   - `Search method` — `hybrid_search` (по умолчанию) и т.д.
+   Install the `.difypkg` through Plugins -> Install plugin (Local), or with
+   `dify plugin install`.
+3. **Tool configuration** (in the tool card):
+   - `Dify service API base URL` — inside docker-compose use
+     `http://api:5001/v1`, otherwise `https://your-dify-host/v1`;
+   - `Knowledge base API key` — the key from step 1;
+   - `Memory knowledge base ID` — the knowledge base ID;
+   - `Search method` — `hybrid_search` by default.
 
-## Настройка Agent-блока
+The plugin contacts only the configured Dify API base URL. No data is sent to
+any third-party service.
 
-Добавьте все 4 тула агенту и дайте системный промпт вроде:
+## Agent node setup
+
+Add all four tools to the agent and provide a system prompt such as:
 
 ```text
-У тебя есть долговременная память о пользователе (тулы memory_*).
-В начале разговора вызови memory_search по теме беседы и учитывай найденное.
-Сохраняй через memory_save только устойчивые данные: имя, роль, предпочтения,
-цели, решения — по одному факту на вызов. Мелочи текущей задачи не сохраняй.
-Если пользователь исправил или отозвал информацию — удали старое через
-memory_forget и сохрани новое. Если пользователь просит забыть — удаляй
-безусловно. user_key не передавай, если пользователь сам не назвал свой id/email.
+You have long-term memory about the user (memory_* tools).
+At the start of a conversation, call memory_search on the topic and use what
+you find. Save only durable information with memory_save: name, role,
+preferences, goals, decisions — one fact per call. Do not save transient
+details of the current task. When the user corrects or retracts information,
+delete the old memory with memory_forget and save the new one. If the user asks
+to forget something, delete it unconditionally. Do not pass user_key unless the
+user states their id or email.
 ```
 
-`user_key` в чатфлоу можно и не заполнять: платформа подставит end-user id.
-Если у вас своя учётка пользователей (email и т.п.) — просите агента передавать
-её в `user_key`, память будет группироваться по ней.
+`user_key` can be left empty: the platform supplies the Dify end-user id. If you
+have your own user accounts (email, internal id), have the agent pass that value
+in `user_key` so memory is grouped by it.
 
-## Разработка
+## Development
 
 ```bash
-# удалённая отладка: Plugins -> Get debug key, затем .env:
+# remote debugging: Plugins -> Get debug key, then .env:
 #   INSTALL_METHOD=remote
 #   REMOTE_INSTALL_URL=...
 #   REMOTE_INSTALL_KEY=...
 python -m main
 ```
 
-## Ограничения
+## Limitations
 
-- Retrieve Dify отдаёт не более ~10 чанков на запрос: это покрывает контекст
-  ответа; полный объём памяти доступен через `memory_recent` (пагинация).
-- Свежесозданный чанк индексируется ~1-5 секунд; плагин ждёт готовности
-  документа при первом сохранении.
-- Поиск работает по всей базе знаний; не кладите в эту базу ничего, кроме памяти.
-- Хранилище маппинга — KV-storage плагина Dify (живёт в вашем инстансе).
+- Dify retrieval returns at most ~10 chunks per request. That covers the reply
+  context; the full memory is available through `memory_recent` (paginated).
+- A newly created chunk is indexed in a few seconds. The plugin waits for the
+  document to finish indexing on the first save for a user.
+- Retrieval runs across the configured knowledge base; do not store unrelated
+  knowledge in the memory knowledge base.
+- The document mapping lives in Dify's plugin KV storage (inside your instance).
